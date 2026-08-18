@@ -8,20 +8,27 @@ st.set_page_config(page_title="CAEX - Control Última Milla", page_icon="📦", 
 st.title("📦 Control Operativo de Envíos - CAEX")
 
 @st.cache_resource
-def iniciar_conexion():
+#def iniciar_conexion():
+def conectar_db():
     try:
-        conexion = mysql.connector.connect(
-            host="127.0.0.1",
-            user="root",
-            password="",
+           ## conexion = mysql.connector.connect(
+            ## host="127.0.0.1",
+            ##cuser="root",
+            ## password="",
+            # #database="caex_logistica"
+            return mysql.connector.connect (
+            host="gateway01.us-east-1.prod.aws.tidbcloud.com",
+            port=4000,
+            user="2GfuJL3tx7ytwVq.root",
+            password="FqP5AOh3JjhsM0PV",
             database="caex_logistica"
-        )
-        return conexion
-    except Error as e:
-        st.error(f"Error conectando a la base de datos local: {e}")
-        return None
+            )
+        ## return conexion
+    #except Error as e:
+     #   st.error(f"Error conectando a la base de datos local: {e}")
+      #  return None
 
-conexion = iniciar_conexion()
+conexion = conectar_db ():
 
 def obtener_datos(query, params=None):
     return pd.read_sql(query, conexion, params=params)
