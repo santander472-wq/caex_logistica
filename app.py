@@ -10,58 +10,13 @@ st.title("📦 Control Operativo de Envíos - CAEX")
 @st.cache_resource
 def iniciar_conexion():
     try:
-        # Nos conectamos inicialmente al servidor sin base de datos fija
         conexion = mysql.connector.connect(
             host="gateway01.us-east-1.prod.aws.tidbcloud.com",
             port=4000,
             user="2GfuJL3tx7ytwVq.root",
-            password="FqP5AOh3JjhsM0PV"
+            password="FqP5AOh3JjhsM0PV",
+            database="caex_logistica"
         )
-        cursor = conexion.cursor()
-        # Creamos la base de datos y las tablas si no existen
-        cursor.execute("CREATE DATABASE IF NOT EXISTS caex_logistica;")
-        cursor.execute("USE caex_logistica;")
-        
-        cursor.execute("""
-        CREATE TABLE IF NOT EXISTS agencias (
-            id_agencia INT AUTO_INCREMENT PRIMARY KEY,
-            nombre_agencia VARCHAR(100) NOT NULL
-        )
-        """)
-        cursor.execute("""
-        CREATE TABLE IF NOT EXISTS mensajeros (
-            id_mensajero INT AUTO_INCREMENT PRIMARY KEY,
-            nombre_completo VARCHAR(100) NOT NULL
-        )
-        """)
-        cursor.execute("""
-        CREATE TABLE IF NOT EXISTS verificaciones (
-            id_verificacion INT AUTO_INCREMENT PRIMARY KEY,
-            fecha_ingreso DATE NOT NULL,
-            cliente VARCHAR(100) NOT NULL,
-            id_agencia INT NOT NULL,
-            numero_guia VARCHAR(50) NOT NULL,
-            estado VARCHAR(30) DEFAULT 'Verificado'
-        )
-        """)
-        cursor.execute("""
-        CREATE TABLE IF NOT EXISTS cargues_envios (
-            id_cargue INT AUTO_INCREMENT PRIMARY KEY,
-            numero_guia VARCHAR(50) NOT NULL,
-            id_mensajero INT NOT NULL,
-            id_agencia INT NOT NULL,
-            fecha_cargue TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            estado VARCHAR(50) DEFAULT 'En Zona',
-            subestado VARCHAR(100) DEFAULT NULL
-        )
-        """)
-        cursor.execute("INSERT IGNORE INTO agencias (id_agencia, nombre_agencia) VALUES (1, 'Nodo Cali'), (2, 'Sede Cámbulos'), (3, 'El Cedro')")
-        cursor.execute("INSERT IGNORE INTO mensajeros (id_mensajero, nombre_completo) VALUES (1, 'VICTOR MANUEL CAICEDO ANGULO'), (2, 'MESA DE CONTROL')")
-        conexion.commit()
-        cursor.close()
-        
-        # Reconectamos ya usando la base de datos de CAEX
-        conexion.database = "caex_logistica"
         return conexion
     except Error as e:
         st.error(f"Error conectando a TiDB Cloud: {e}")
@@ -76,7 +31,6 @@ if conexion:
     df_agencias = obtener_datos("SELECT id_agencia, nombre_agencia FROM agencias")
     df_mensajeros = obtener_datos("SELECT id_mensajero, nombre_completo FROM mensajeros")
 
-    # Estructura de 4 Pestañas
     tab_verif, tab_cargue, tab_descargue, tab_reporte = st.tabs([
         "✅ 1. Verificación Clientes", 
         "📦 2. Cargue a Zona", 
@@ -84,9 +38,6 @@ if conexion:
         "📊 4. Reportes"
     ])
     
-    # ==========================================
-    # PESTAÑA 1: VERIFICACIÓN (CADENA / CARVAJAL)
-    # ==========================================
     with tab_verif:
         st.markdown("Módulo para constatar el ingreso físico de envíos masivos.")
         col1, col2, col3 = st.columns(3)
@@ -148,9 +99,6 @@ if conexion:
                 mime="text/csv",
             )
 
-    # ==========================================
-    # PESTAÑA 2: CARGUE A ZONA
-    # ==========================================
     with tab_cargue:
         st.markdown("Asignación de guías al mensajero. Quedarán en estado **En Zona**.")
         col1, col2 = st.columns(2)
@@ -179,9 +127,6 @@ if conexion:
                 finally:
                     cursor.close()
 
-    # ==========================================
-    # PESTAÑA 3: DESCARGUE DE ENVÍOS
-    # ==========================================
     with tab_descargue:
         st.markdown("Liquida los envíos gestionados. Lo no descargado seguirá en la cuenta del mensajero.")
         accion = st.radio(
@@ -217,9 +162,6 @@ if conexion:
                 finally:
                     cursor.close()
 
-    # ==========================================
-    # PESTAÑA 4: REPORTE DE GESTIÓN (MENSAJEROS)
-    # ==========================================
     with tab_reporte:
         st.subheader("📊 Resumen Operativo por Mensajero")
         if st.button("🔄 Actualizar Datos"):
